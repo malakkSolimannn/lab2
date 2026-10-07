@@ -1,5 +1,4 @@
 #!/bin/bash
-# Usage: ./restore.sh dir malicious_dir
 
 DIR="$1"
 MAL_DIR="$2"
@@ -9,7 +8,7 @@ while true; do
     files=("$MAL_DIR"/*)
 
     if [ ${#files[@]} -eq 0 ]; then
-        echo "No malicious files to review."
+        echo "No malicious files to review"
         exit 0
     fi
 
@@ -24,16 +23,16 @@ while true; do
     [ "$num" = "0" ] && exit 0
 
     if ! [[ "$num" =~ ^[0-9]+$ ]] || [ "$num" -lt 1 ] || [ "$num" -gt ${#files[@]} ]; then
-        echo "Invalid number."
+        echo "Invalid number "
         continue
     fi
 
     file="${files[$((num-1))]}"
     name=$(basename "$file")
 
-    echo "1) Restore (false positive)"
+    echo "1) Restore"
     echo "2) Permanently delete"
-    echo "3) Leave as is"
+    echo "3) Leave Unchanged"
     read -p "Choice: " choice
 
     case "$choice" in
