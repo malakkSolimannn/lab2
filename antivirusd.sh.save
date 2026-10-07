@@ -1,0 +1,60 @@
+#!/bin/bash
+# Usage: ./antivirusd.sh dir malicious_dir interval-secs
+
+DIR="$1"
+MAL_DIR="$2"
+INTERVAL="$3"
+
+# ===== REQUIRED LISTS (document this location in your README) =====
+FLAGGED_EXTENSIONS=("exe" "bat" "vbs" "scr" "ps1")
+FLAGGED_KEYWORDS=("virus" "trojan" "malware" "worm" "ransomware")
+# ==================================================================
+
+mkdir -p "$MAL_DIR"
+
+scan() {
+    for path in "$DIR"/*; do
+        [ -f "$path" ] || continue          # files only, skip anything else
+        name=$(basename "$path")
+        malicious=false
+
+        # Rule 1: flagged extension
+        if [[ "$name" == *.* ]]; then
+            ext="${name##*.}"
+            for e in "${FLAGGED_EXTENSIONS[@]}"; do
+                [ "$ext" = "$e" ] && malicious=true
+            done
+        fi
+
+        # Rule 2: flagged keyword in contents (case-insensitive)
+        if [ "$malicious" = false ]; then
+            for k in "${FLAGGED_KEYWORDS[@]}"; do
+                if grep -qiaF -- "$k" "$path"; then
+                    malicious=true
+                    break
+                fi
+            done
+        fi
+
+        if [ "$malicious" = true ]; then
+            echo "$name is malicious and it is DELETED"
+            cp "$path" "$MAL_DIR/$name"
+            rm "$path"
+        fi
+    done
+}
+
+# First run: no snapshot yet, so scan immediately
+if [ ! -f directory-info.last ]; then
+    scan
+    ls -l "$DIR" > directory-info.last
+fi
+
+while true; do
+    sleep "$INTERVAL"
+    ls -l "$DIR" > directory-info.new
+    if ! diff -q directory-info.last directory-info.new > /dev/null; then
+        scan
+        cp directory-info.new directory-info.last
+    fi
+done
